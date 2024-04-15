@@ -48,17 +48,50 @@ public class ProdutoController {
      * Retorna os detalhes de um produto com base no ID fornecido.
      *
      * @param id o ID do produto a ser buscado
-     * @return um ResponseEntity contendo o produto encontrado ou uma mensagem de erro se o produto não for encontrado
+     * @return um ResponseEntity contendo o produto encontrado e o status 200 (OK) ou uma mensagem de erro se o produto não for encontrado
      */
     @GetMapping("/produtos/{id}")
     public ResponseEntity<Object> ListarUmProduto(@PathVariable(value = "id") UUID id) {
         Optional<ProdutoModel> produtoBuscado = produtoRepository.findById(id);
         if (produtoBuscado.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Produto não encontrado");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Produto não encontrado!");
         }
         return ResponseEntity.status(HttpStatus.OK).body(produtoBuscado.get());
     }
 
+    /**
+     * Atualizar um produto pelo id.
+     *
+     * @param id o ID do produto a ser atualizado
+     * @param produtoRecordDto o DTO com os valores do produto a ser atualizado
+     * @return um ResponseEntity contendo o produto atualizado e o status 200 (OK) ou uma mensagem de erro se o produto não for encontrado
+     */
+    @PutMapping("/produtos/{id}")
+    public ResponseEntity<Object> AtualizarProduto(@PathVariable(value="id") UUID id,
+                                                   @RequestBody @Valid ProdutoRecordDto produtoRecordDto){
+        Optional<ProdutoModel> produtoBuscado = produtoRepository.findById(id);
+        if (produtoBuscado.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Produto não encontrado!");
+        }
+        var produtoModel = produtoBuscado.get();
+        BeanUtils.copyProperties(produtoRecordDto, produtoModel);
+        return ResponseEntity.status(HttpStatus.OK).body(produtoRepository.save(produtoModel));
+    }
 
+    /**
+     * Remover produto pelo id
+     *
+     * @param id o ID do produto a ser removido
+     * @return um ResponseEntity com o status 200 (OK) com uma mensagem de sucesso ou uma mensagem de erro se o produto não for encontrado
+     */
+    @DeleteMapping("/produtos/{id}")
+    public ResponseEntity<Object> DeletarProduto(@PathVariable(value = "id") UUID id){
+        Optional<ProdutoModel> produtoBuscado = produtoRepository.findById(id);
+        if (produtoBuscado.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Produto não encontrado!");
+        }
+        produtoRepository.delete(produtoBuscado.get());
+        return ResponseEntity.status(HttpStatus.OK).body("Produto removido com sucesso!");
+    }
 
 }
