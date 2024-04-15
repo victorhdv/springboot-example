@@ -35,16 +35,6 @@ The API endpoints will be available at http://localhost:8080.
 - PUT /api/produtos/{id}: Updates an existing product.
 - DELETE /api/produtos/{id}: Deletes a product.
 
-## Contributing
-Contributions are welcome! If you'd like to contribute to the project, please follow these guidelines:
-
-- Fork the repository.
-- Create a new branch (git checkout -b feature_branch).
-- Make your changes.
-- Commit your changes (git commit -am 'Add new feature').
-- Push to the branch (git push origin feature_branch).
-- Create a new Pull Request.
-
 ## License
 
 This project is licensed under the [MIT License](https://github.com/victorhdv/springboot-example/blob/master/LICENSE).
