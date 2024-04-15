@@ -14,6 +14,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+
+
 @RestController
 public class ProdutoController {
 
@@ -27,9 +31,12 @@ public class ProdutoController {
      * @return um ResponseEntity contendo o produto criado e o status 201 (CREATED) ou 400(BADREQUEST) em caso de dados inválidos
      */
     @PostMapping("/produtos")
-    public ResponseEntity<ProdutoModel> SalvarProduto(@RequestBody @Valid ProdutoRecordDto produtoRecordDto) {
+    public ResponseEntity<ProdutoModel> salvarProduto(@RequestBody @Valid ProdutoRecordDto produtoRecordDto) {
+
         var produtoModel = new ProdutoModel();
+
         BeanUtils.copyProperties(produtoRecordDto, produtoModel);//similar ao automap no C#
+
         return ResponseEntity.status(HttpStatus.CREATED).body(produtoRepository.save(produtoModel));
     }
 
@@ -39,8 +46,20 @@ public class ProdutoController {
      * @return ResponseEntity com a listagem dos produtos e o status 200 (OK)
      */
     @GetMapping("/produtos")
-    public ResponseEntity<List<ProdutoModel>> ListarProdutos() {
-        return ResponseEntity.status(HttpStatus.OK).body(produtoRepository.findAll());
+    public ResponseEntity<List<ProdutoModel>> listarTodosProdutos() {
+
+        List<ProdutoModel> listaProdutos = produtoRepository.findAll();
+
+        if (!listaProdutos.isEmpty()){
+            for (ProdutoModel produto : listaProdutos){
+
+                UUID id = produto.getIdProduto();
+
+                produto.add(linkTo(methodOn(ProdutoController.class).listarUmProduto(id)).withSelfRel());
+            }
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body(listaProdutos);
     }
 
 
@@ -51,11 +70,14 @@ public class ProdutoController {
      * @return um ResponseEntity contendo o produto encontrado e o status 200 (OK) ou uma mensagem de erro com status 404 (NOT FOUND) se o produto não for encontrado
      */
     @GetMapping("/produtos/{id}")
-    public ResponseEntity<Object> ListarUmProduto(@PathVariable(value = "id") UUID id) {
+    public ResponseEntity<Object> listarUmProduto(@PathVariable(value = "id") UUID id) {
+
         Optional<ProdutoModel> produtoBuscado = produtoRepository.findById(id);
-        if (produtoBuscado.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Produto não encontrado!");
-        }
+
+        if (produtoBuscado.isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Produto não encontrado!");
+
+        produtoBuscado.get().add(linkTo(methodOn(ProdutoController.class).listarTodosProdutos()).withRel("Lista de produtos"));
+
         return ResponseEntity.status(HttpStatus.OK).body(produtoBuscado.get());
     }
 
@@ -67,14 +89,19 @@ public class ProdutoController {
      * @return um ResponseEntity contendo o produto atualizado e o status 200 (OK) ou uma mensagem de erro com status 404 (NOT FOUND) se o produto não for encontrado
      */
     @PutMapping("/produtos/{id}")
-    public ResponseEntity<Object> AtualizarProduto(@PathVariable(value="id") UUID id,
+    public ResponseEntity<Object> atualizarProduto(@PathVariable(value="id") UUID id,
                                                    @RequestBody @Valid ProdutoRecordDto produtoRecordDto){
+
         Optional<ProdutoModel> produtoBuscado = produtoRepository.findById(id);
+
         if (produtoBuscado.isEmpty()){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Produto não encontrado!");
         }
+
         var produtoModel = produtoBuscado.get();
+
         BeanUtils.copyProperties(produtoRecordDto, produtoModel);
+
         return ResponseEntity.status(HttpStatus.OK).body(produtoRepository.save(produtoModel));
     }
 
@@ -85,12 +112,16 @@ public class ProdutoController {
      * @return um ResponseEntity com o status 200 (OK) com uma mensagem de sucesso ou uma mensagem de erro com status 404 (NOT FOUND) se o produto não for encontrado
      */
     @DeleteMapping("/produtos/{id}")
-    public ResponseEntity<Object> DeletarProduto(@PathVariable(value = "id") UUID id){
+    public ResponseEntity<Object> deletarProduto(@PathVariable(value = "id") UUID id){
+
         Optional<ProdutoModel> produtoBuscado = produtoRepository.findById(id);
+
         if (produtoBuscado.isEmpty()){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Produto não encontrado!");
         }
+
         produtoRepository.delete(produtoBuscado.get());
+
         return ResponseEntity.status(HttpStatus.OK).body("Produto removido com sucesso!");
     }
 
